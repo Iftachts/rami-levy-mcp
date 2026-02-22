@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { ramiLevyFetch } from "./client.js";
+import { ramiLevyFetch, type Credentials } from "./client.js";
 import { CartResponseSchema, type CartResponse, type CartItemInput } from "../types.js";
 
 const CART_URL = "https://www.rami-levy.co.il/api/v2/cart";
@@ -38,22 +38,8 @@ if ($rlPage) {
   }
 }
 
-// In-memory cache of cart items. The Rami Levy API has no GET endpoint for
-// the cart — every POST writes the FULL cart and returns the new state.
-// We cache items from each response so we can merge on subsequent calls.
-let cachedItems: Record<string, string> = {};
-let cacheValid = false;
-
 function formatQty(n: number): string {
   return n.toFixed(2);
-}
-
-function updateCache(cart: CartResponse): void {
-  cachedItems = {};
-  for (const item of cart.items) {
-    cachedItems[item.id.toString()] = formatQty(item.quantity);
-  }
-  cacheValid = true;
 }
 
 function buildCartPayload(
@@ -74,64 +60,82 @@ function buildCartPayload(
   };
 }
 
-export async function getCart(store: string): Promise<CartResponse> {
-  // POST the cached items to get current prices/totals without changing items.
-  // If no cache exists, POST empty items which acts as a "read" (returns empty cart
-  // if cart was empty, or syncs to server state).
-  const payload = buildCartPayload(store, cacheValid ? cachedItems : {});
-  const response = await ramiLevyFetch(CART_URL, { method: "POST", body: payload });
-  const cart = CartResponseSchema.parse(response);
-  updateCache(cart);
-  return cart;
-}
+/**
+ * Per-session cart state. Each user session gets its own CartSession
+ * so cached items don't leak between users.
+ */
+export class CartSession {
+  private cachedItems: Record<string, string> = {};
+  private cacheValid = false;
 
-export async function addToCart(
-  store: string,
-  newItems: CartItemInput[],
-): Promise<CartResponse> {
-  // If we don't have cache, start fresh (items added on website won't be preserved)
-  const currentItems: Record<string, string> = cacheValid
-    ? { ...cachedItems }
-    : {};
+  constructor(private creds: Credentials) {}
 
-  for (const item of newItems) {
-    const existingQty = parseFloat(currentItems[item.id.toString()] || "0");
-    currentItems[item.id.toString()] = formatQty(existingQty + item.quantity);
-  }
-
-  const payload = buildCartPayload(store, currentItems);
-  const response = await ramiLevyFetch(CART_URL, { method: "POST", body: payload });
-
-  const cart = CartResponseSchema.parse(response);
-  updateCache(cart);
-  await syncBrowser();
-  return cart;
-}
-
-export async function removeFromCart(
-  store: string,
-  itemIds: number[],
-): Promise<CartResponse> {
-  if (!cacheValid) {
-    throw new Error(
-      "Cart state unknown — cannot remove items without first syncing. " +
-      "Use get_cart first to sync the cart state.",
-    );
-  }
-
-  const idsToRemove = new Set(itemIds.map(String));
-  const updatedItems: Record<string, string> = {};
-  for (const [id, qty] of Object.entries(cachedItems)) {
-    if (!idsToRemove.has(id)) {
-      updatedItems[id] = qty;
+  private updateCache(cart: CartResponse): void {
+    this.cachedItems = {};
+    for (const item of cart.items) {
+      this.cachedItems[item.id.toString()] = formatQty(item.quantity);
     }
+    this.cacheValid = true;
   }
 
-  const payload = buildCartPayload(store, updatedItems);
-  const response = await ramiLevyFetch(CART_URL, { method: "POST", body: payload });
+  async getCart(store?: string): Promise<CartResponse> {
+    const s = store || this.creds.store;
+    const payload = buildCartPayload(s, this.cacheValid ? this.cachedItems : {});
+    const response = await ramiLevyFetch(CART_URL, this.creds, { method: "POST", body: payload });
+    const cart = CartResponseSchema.parse(response);
+    this.updateCache(cart);
+    return cart;
+  }
 
-  const cart = CartResponseSchema.parse(response);
-  updateCache(cart);
-  await syncBrowser();
-  return cart;
+  async addToCart(
+    newItems: CartItemInput[],
+    store?: string,
+  ): Promise<CartResponse> {
+    const s = store || this.creds.store;
+    const currentItems: Record<string, string> = this.cacheValid
+      ? { ...this.cachedItems }
+      : {};
+
+    for (const item of newItems) {
+      const existingQty = parseFloat(currentItems[item.id.toString()] || "0");
+      currentItems[item.id.toString()] = formatQty(existingQty + item.quantity);
+    }
+
+    const payload = buildCartPayload(s, currentItems);
+    const response = await ramiLevyFetch(CART_URL, this.creds, { method: "POST", body: payload });
+
+    const cart = CartResponseSchema.parse(response);
+    this.updateCache(cart);
+    await syncBrowser();
+    return cart;
+  }
+
+  async removeFromCart(
+    itemIds: number[],
+    store?: string,
+  ): Promise<CartResponse> {
+    if (!this.cacheValid) {
+      throw new Error(
+        "Cart state unknown — cannot remove items without first syncing. " +
+        "Use get_cart first to sync the cart state.",
+      );
+    }
+
+    const s = store || this.creds.store;
+    const idsToRemove = new Set(itemIds.map(String));
+    const updatedItems: Record<string, string> = {};
+    for (const [id, qty] of Object.entries(this.cachedItems)) {
+      if (!idsToRemove.has(id)) {
+        updatedItems[id] = qty;
+      }
+    }
+
+    const payload = buildCartPayload(s, updatedItems);
+    const response = await ramiLevyFetch(CART_URL, this.creds, { method: "POST", body: payload });
+
+    const cart = CartResponseSchema.parse(response);
+    this.updateCache(cart);
+    await syncBrowser();
+    return cart;
+  }
 }
