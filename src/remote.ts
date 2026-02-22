@@ -6,7 +6,7 @@ import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js
 import { createServer } from "./tools.js";
 import type { Credentials } from "./api/client.js";
 
-const PORT = parseInt(process.env.MCP_PORT || "3000", 10);
+const PORT = parseInt(process.env.MCP_PORT || "5000", 10);
 const HOST = process.env.MCP_HOST || "0.0.0.0";
 
 // Track active transports by session ID for cleanup
