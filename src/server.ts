@@ -126,8 +126,7 @@ server.registerTool(
   "get_cart",
   {
     description:
-      "Get the current contents of the Rami Levy shopping cart, including items, prices, and totals. " +
-      "Note: requires at least one add_to_cart call in this session to sync cart state.",
+      "Get the current contents of the Rami Levy shopping cart, including items, prices, and totals.",
     inputSchema: {
       store: z.string().optional().describe("Store ID (default: from config)"),
     },
