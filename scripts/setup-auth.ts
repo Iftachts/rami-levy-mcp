@@ -4,6 +4,7 @@ import { writeFileSync, existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
 const ENV_PATH = resolve(import.meta.dirname, "..", ".env");
+const HTML_PATH = resolve(import.meta.dirname, "extract-tokens.html");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -18,39 +19,54 @@ function ask(question: string): Promise<string> {
 
 async function main() {
   console.log(`
-\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
-\u2551         Rami Levy MCP Server - Auth Setup               \u2551
-\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d
+╔══════════════════════════════════════════════════════════╗
+║         Rami Levy MCP Server - Auth Setup               ║
+╚══════════════════════════════════════════════════════════╝
 
 This script helps you extract authentication tokens from
 the Rami Levy website.
 
 Steps:
-1. Opening https://www.rami-levy.co.il in your browser...
-2. Log in to your Rami Levy account
-3. Open DevTools (F12) \u2192 Network tab
-4. Perform any action (e.g., search for a product)
-5. Click on any request to rami-levy.co.il
-6. Copy the header values when prompted below
+1. Log in to https://www.rami-levy.co.il
+2. Open the token extractor page in your browser
+3. Follow the instructions to capture your tokens
+4. Paste the captured code below
 `);
 
-  // Try to open browser
+  // Try to open the HTML helper
   try {
     const open = (await import("open")).default;
-    await open("https://www.rami-levy.co.il");
-    console.log("Browser opened. Log in and open DevTools (F12) \u2192 Network tab.\n");
+    await open(HTML_PATH);
+    console.log("Token extractor page opened in your browser.\n");
+    console.log("Follow the steps on that page, then paste the captured code below.\n");
   } catch {
-    console.log("Could not open browser automatically.");
-    console.log("Please open https://www.rami-levy.co.il manually.\n");
+    console.log(`Could not open browser automatically.`);
+    console.log(`Please open this file in your browser: ${HTML_PATH}\n`);
   }
 
-  console.log('Find any API request in the Network tab and copy these headers:\n');
+  const encoded = await ask("Paste the captured code here: ");
 
-  const token = await ask(
-    'Authorization header value (the part after "Bearer "): ',
-  );
-  const ecomToken = await ask("ecomtoken header value: ");
-  const cookie = await ask("cookie header value: ");
+  let token: string;
+  let ecomToken: string;
+  let cookie: string;
+
+  try {
+    const decoded = JSON.parse(Buffer.from(encoded, "base64").toString("utf-8"));
+    token = decoded.a || "";
+    ecomToken = decoded.e || "";
+    cookie = decoded.c || "";
+
+    if (!token) {
+      throw new Error("Auth token not found in captured data");
+    }
+
+    console.log("\nTokens decoded successfully!");
+  } catch (e) {
+    console.error("\nFailed to decode the captured code. Make sure you copied the full output.");
+    console.error("You can also set up tokens manually — see README.md for details.\n");
+    rl.close();
+    process.exit(1);
+  }
 
   // Load existing .env to preserve store setting
   let existingStore = "331";

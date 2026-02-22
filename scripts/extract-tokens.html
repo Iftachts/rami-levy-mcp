@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Rami Levy Token Extractor</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background: #f5f5f5; }
+  h1 { color: #1a73e8; }
+  .step { background: white; border-radius: 8px; padding: 16px; margin: 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .step h3 { margin-top: 0; }
+  textarea { width: 100%; height: 80px; font-family: monospace; font-size: 12px; }
+  button { background: #1a73e8; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+  button:hover { background: #1557b0; }
+  .bookmarklet-link { display: inline-block; background: #34a853; color: white; padding: 14px 28px; border-radius: 6px; font-size: 18px; text-decoration: none; font-weight: bold; cursor: grab; }
+  .bookmarklet-link:hover { background: #2d8f47; }
+  .success { color: green; font-weight: bold; }
+  .error { color: red; font-weight: bold; }
+  #result { display: none; }
+  .note { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<h1>Rami Levy Token Extractor</h1>
+
+<div class="step">
+  <h3>Step 1 — Add the bookmarklet</h3>
+  <p>Drag this button to your <strong>bookmarks bar</strong>:</p>
+  <p>
+    <a class="bookmarklet-link" href="javascript:void(function(){var d=JSON.parse(localStorage.getItem('ramilevy'));var t=d.authuser.user.token;var c=document.cookie;var r=btoa(JSON.stringify({a:t,e:t,c:c}));var div=document.createElement('div');div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:999999;display:flex;align-items:center;justify-content:center';div.innerHTML='<div style=background:white;padding:30px;border-radius:10px;width:80%25;max-width:600px><h2 style=margin-top:0>Token Extracted!</h2><p>Press Ctrl+A then Ctrl+C to copy:</p><textarea id=rl-token-output style=width:100%25;height:200px;font-size:12px>'+r+'</textarea><br><br><button onclick=this.parentElement.parentElement.remove() style=padding:10px;20px;font-size:16px>Close</button></div>';document.body.appendChild(div);var ta=document.getElementById('rl-token-output');ta.select();ta.focus()}())">
+      Extract Rami Levy Tokens
+    </a>
+  </p>
+  <div class="note">
+    <strong>Tip:</strong> If you don't see the bookmarks bar, press Ctrl+Shift+B to show it.
+  </div>
+</div>
+
+<div class="step">
+  <h3>Step 2 — Run it</h3>
+  <p>Go to <a href="https://www.rami-levy.co.il" target="_blank">rami-levy.co.il</a> and log in.</p>
+  <p>Then click the <strong>"Extract Rami Levy Tokens"</strong> bookmark.</p>
+  <p>An overlay will appear on the page with the code — already selected, just press <strong>Ctrl+C</strong> to copy.</p>
+</div>
+
+<div class="step">
+  <h3>Step 3 — Paste here</h3>
+  <p>Paste the captured code below:</p>
+  <textarea id="input" placeholder="Paste the captured code here..."></textarea>
+  <br><br>
+  <button onclick="decode()">Generate .env</button>
+</div>
+
+<div class="step" id="result">
+  <h3>Your .env file contents:</h3>
+  <textarea id="output" style="height:120px"></textarea>
+  <br><br>
+  <button onclick="copyEnv()">Copy .env</button>
+  <span id="envStatus"></span>
+  <p>Paste this into the <code>.env</code> file in your rami-levy-mcp project folder.</p>
+</div>
+
+<script>
+function decode() {
+  var input = document.getElementById('input').value.trim();
+  try {
+    var data = JSON.parse(atob(input));
+    var env = 'RAMI_LEVY_AUTH_TOKEN=' + data.a + '\n' +
+              'RAMI_LEVY_ECOM_TOKEN=' + data.e + '\n' +
+              'RAMI_LEVY_COOKIE=' + data.c + '\n' +
+              'RAMI_LEVY_STORE=331\n';
+    document.getElementById('output').value = env;
+    document.getElementById('result').style.display = 'block';
+  } catch(e) {
+    alert('Invalid code. Make sure you copied the full output from the dialog.');
+  }
+}
+
+function copyEnv() {
+  navigator.clipboard.writeText(document.getElementById('output').value);
+  document.getElementById('envStatus').innerHTML = ' <span class="success">Copied! Paste into your .env file</span>';
+}
+</script>
+</body>
+</html>

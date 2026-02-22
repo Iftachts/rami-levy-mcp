@@ -23,7 +23,7 @@ Works with **Claude Desktop**, **Claude Code (CLI)**, **Claude Code Desktop**, a
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rami-levy-mcp.git
+git clone https://github.com/Iftachts/rami-levy-mcp.git
 cd rami-levy-mcp
 npm install
 npm run build
@@ -35,23 +35,15 @@ npm run build
 npm run setup-auth
 ```
 
-This will open a browser for you to log in and capture your tokens.
+This opens a helper page in your browser that guides you through token extraction:
 
-Alternatively, you can manually extract tokens from your browser:
 1. Log in to [rami-levy.co.il](https://www.rami-levy.co.il/)
-2. Open DevTools (F12) > Network tab
-3. Look for API requests to `www-api.rami-levy.co.il`
-4. Copy the `Authorization` header value (without "Bearer ") as `RAMI_LEVY_AUTH_TOKEN`
-5. Copy the `ecom-token` header value as `RAMI_LEVY_ECOM_TOKEN`
-6. Copy the `Cookie` header value as `RAMI_LEVY_COOKIE`
+2. The helper page gives you a snippet to paste in the browser console
+3. Do any action on the Rami Levy site (search, click, etc.)
+4. The tokens are captured automatically and copied to your clipboard
+5. Paste the code back into the setup script
 
-### 3. Create your `.env` file
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and paste your tokens.
+The script creates your `.env` file automatically.
 
 ## Usage
 
