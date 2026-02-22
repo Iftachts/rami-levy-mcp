@@ -10,7 +10,7 @@ import { createServer } from "./tools.js";
 import type { Credentials } from "./api/client.js";
 import { RamiLevyAuthProvider, loginPageHtml } from "./auth.js";
 
-const PORT = parseInt(process.env.MCP_PORT || "5000", 10);
+const PORT = parseInt(process.env.PORT || process.env.MCP_PORT || "5000", 10);
 const HOST = process.env.MCP_HOST || "0.0.0.0";
 
 // The issuer URL is the logical identifier for the OAuth server.
