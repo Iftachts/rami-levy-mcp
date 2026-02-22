@@ -1,0 +1,9 @@
+run = "npm run start:remote"
+entrypoint = "src/remote.ts"
+
+[build]
+command = "npm install && npm run build"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
