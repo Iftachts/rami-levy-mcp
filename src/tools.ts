@@ -1,14 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { searchProducts } from "./api/search.js";
-import { addToCart, removeFromCart, getCart } from "./api/cart.js";
-import { getStore, formatError } from "./api/client.js";
+import { CartSession } from "./api/cart.js";
+import { formatError, type Credentials } from "./api/client.js";
 
-export function createServer(): McpServer {
+export function createServer(creds: Credentials): McpServer {
   const server = new McpServer({
     name: "rami-levy-mcp",
     version: "1.0.0",
   });
+
+  // Per-session cart state — each user gets their own cache
+  const cart = new CartSession(creds);
 
   // --- Tools ---
 
@@ -24,7 +27,7 @@ export function createServer(): McpServer {
     },
     async ({ query, store }) => {
       try {
-        const result = await searchProducts(query, store);
+        const result = await searchProducts(query, creds, store);
         return {
           content: [
             {
@@ -61,7 +64,7 @@ export function createServer(): McpServer {
     },
     async ({ store, items }) => {
       try {
-        const result = await addToCart(store || getStore(), items);
+        const result = await cart.addToCart(items, store);
         return {
           content: [
             {
@@ -96,7 +99,7 @@ export function createServer(): McpServer {
     },
     async ({ store, item_ids }) => {
       try {
-        const result = await removeFromCart(store || getStore(), item_ids);
+        const result = await cart.removeFromCart(item_ids, store);
         return {
           content: [
             {
@@ -131,7 +134,7 @@ export function createServer(): McpServer {
     },
     async ({ store }) => {
       try {
-        const result = await getCart(store || getStore());
+        const result = await cart.getCart(store);
         return {
           content: [
             {

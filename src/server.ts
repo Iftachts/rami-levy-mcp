@@ -2,8 +2,9 @@
 import "dotenv/config";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createServer } from "./tools.js";
+import { credentialsFromEnv } from "./api/client.js";
 
-const server = createServer();
+const server = createServer(credentialsFromEnv());
 
 async function main() {
   const transport = new StdioServerTransport();
