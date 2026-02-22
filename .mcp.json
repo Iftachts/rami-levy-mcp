@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rami-levy": {
+      "command": "node",
+      "args": ["dist/src/server.js"],
+      "env": {
+        "RAMI_LEVY_AUTH_TOKEN": "${RAMI_LEVY_AUTH_TOKEN}",
+        "RAMI_LEVY_ECOM_TOKEN": "${RAMI_LEVY_ECOM_TOKEN}",
+        "RAMI_LEVY_COOKIE": "${RAMI_LEVY_COOKIE}",
+        "RAMI_LEVY_STORE": "${RAMI_LEVY_STORE}"
+      }
+    }
+  }
+}
