@@ -15,39 +15,40 @@ const app = createMcpExpressApp({ host: HOST });
 
 // Handle all MCP requests (POST, GET, DELETE) on /mcp
 app.all("/mcp", async (req, res) => {
-  // For POST (new session initialization), create a new transport + server
-  if (req.method === "POST" && !req.headers["mcp-session-id"]) {
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-    });
-
-    transport.onclose = () => {
-      const sid = transport.sessionId;
-      if (sid) transports.delete(sid);
-    };
-
-    const server = createServer();
-    await server.connect(transport);
-
-    const sid = transport.sessionId;
-    if (sid) transports.set(sid, transport);
-
-    await transport.handleRequest(req, res);
-    return;
-  }
-
-  // For existing sessions, look up the transport
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
+
+  // Existing session — route to its transport
   if (sessionId) {
     const transport = transports.get(sessionId);
     if (transport) {
-      await transport.handleRequest(req, res);
+      await transport.handleRequest(req, res, req.body);
       return;
     }
+    res.status(404).json({ error: "Session not found" });
+    return;
   }
 
-  // Session not found or missing header
-  res.status(400).json({ error: "Invalid or missing session" });
+  // New session — only POST (initialize) is allowed without a session header
+  if (req.method !== "POST") {
+    res.status(400).json({ error: "Missing mcp-session-id header" });
+    return;
+  }
+
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => randomUUID(),
+    onsessioninitialized: (sid) => {
+      transports.set(sid, transport);
+    },
+  });
+
+  transport.onclose = () => {
+    const sid = transport.sessionId;
+    if (sid) transports.delete(sid);
+  };
+
+  const server = createServer();
+  await server.connect(transport);
+  await transport.handleRequest(req, res, req.body);
 });
 
 app.listen(PORT, HOST, () => {
