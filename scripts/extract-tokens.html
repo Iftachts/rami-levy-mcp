@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Rami Levy Token Extractor</title>
+<title>Rami Levy MCP — Bookmarklets</title>
 <style>
   body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background: #f5f5f5; }
   h1 { color: #1a73e8; }
@@ -17,10 +17,13 @@
   .error { color: red; font-weight: bold; }
   #result { display: none; }
   .note { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin: 8px 0; }
+  .section-title { color: #333; border-bottom: 2px solid #1a73e8; padding-bottom: 8px; margin-top: 40px; }
+  .bookmarklet-link.sync { background: #ea4335; }
+  .bookmarklet-link.sync:hover { background: #c5221f; }
 </style>
 </head>
 <body>
-<h1>Rami Levy Token Extractor</h1>
+<h1>Rami Levy MCP — Bookmarklets</h1>
 
 <div class="step">
   <h3>Step 1 — Add the bookmarklet</h3>
@@ -57,6 +60,20 @@
   <button onclick="copyEnv()">Copy .env</button>
   <span id="envStatus"></span>
   <p>Paste this into the <code>.env</code> file in your rami-levy-mcp project folder.</p>
+</div>
+
+<h2 class="section-title">Cart Sync Bookmarklet</h2>
+
+<div class="step">
+  <h3>Sync browser cart</h3>
+  <p>After adding or removing items via the MCP server, the Rami Levy website won't show the changes due to local caching.</p>
+  <p>Drag this button to your <strong>bookmarks bar</strong>, then click it on the Rami Levy site to sync:</p>
+  <p>
+    <a class="bookmarklet-link sync" href="javascript:void(function(){var d=JSON.parse(localStorage.ramilevy);d.cart={items:[],loaded:false};localStorage.ramilevy=JSON.stringify(d);location.reload()}())">
+      Sync Rami Levy Cart
+    </a>
+  </p>
+  <p>The page will reload with the latest cart state from the server.</p>
 </div>
 
 <script>

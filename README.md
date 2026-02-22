@@ -123,14 +123,11 @@ for await (const message of query({
 
 ## Browser Sync
 
-The Rami Levy website caches cart state locally. After making cart changes via the MCP server, you need to sync the browser. Options:
+The Rami Levy website caches cart state locally. After making cart changes via the MCP server, you need to sync the browser.
 
-1. **Bookmarklet** — create a bookmark with this URL:
-   ```
-   javascript:void(function(){var d=JSON.parse(localStorage.ramilevy);d.cart={items:[],loaded:false};localStorage.ramilevy=JSON.stringify(d);location.reload();}())
-   ```
+Open `scripts/extract-tokens.html` in your browser — it includes a **"Sync Rami Levy Cart"** bookmarklet you can drag to your bookmarks bar. Click it on the Rami Levy site after any cart change to reload with the latest state.
 
-2. **Incognito tab** — open the Rami Levy cart in a fresh incognito window.
+Alternatively, open the cart in a fresh incognito window.
 
 ## Store IDs
 
